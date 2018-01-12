@@ -3,8 +3,8 @@ import numpy as np
 
 """
 perceptron:
-   - a supervised learning model which determines (via the perceptron learning algorithm) whether or not an input with
-     a feature vector belongs to a particular class
+   - a supervised learning model which determines (via the perceptron learning algorithm) whether or not an input 
+     defined by its associated feature vector belongs to a particular class
    - this model assumes the training_data is linearly separable (i.e. a hyperplane can completely and correctly
      divide the training_data)
    - this model also assumes output is binary in the form of +1 or -1
@@ -31,12 +31,51 @@ class perceptron:
     def train(self):
         cleanPass = True
         t = 0
-        while t < self.max_iterations: 
+        while cleanPass and t < self.max_iterations: 
             cleanPass = True
             for data_val in self.training_data:
-                if __sign__(data_val.x * self.w) != data_val.y:   # Misclassified Item
+                if __sign__(np.dot(data_val.get_x * self.w)) != data_val.get_y:   # Misclassified Item
                     cleanPass = False
-                    w = w + self.training_data.y * self.training_data.x
+                    self.w = self.w + (self.training_data.get_y * self.training_data.get_x)
                     break
             t += 1
         return self.w
+
+"""
+training_set: class wrapper for training data; produces a linearly separable data set
+"""
+class training_set:
+    """
+    __init__: constructor
+    """
+    def __init__(self):
+        self.x = []
+        self.y = []
+        self.__load_data__()
+
+    """
+    __load_data__: load data
+    """
+    def __load_data__(self):
+        pass
+
+    """
+    get_x: simple accessor
+    """
+    def get_x(self):
+        return self.x
+
+    """
+    get_y: simple accessor
+    """
+    def get_y(self):
+        return self.y
+
+
+"""
+test driver: only executed when run as "python perceptron.py"; not as import
+"""
+if __name__ == "__main__":
+    max_iterations = 10000
+    training_dataset = training_set()
+    model = perceptron(training_dataset, max_iterations)
