@@ -15,10 +15,12 @@ class perceptron:
     """
     __init__: constructor
     """
-    def __init__(self, training_data, max_iterations, num_features):
+    def __init__(self, training_data, max_iterations, num_features, max_x_1):
         self.w = np.zeros((num_features + 1, 1))# index 0 represents bias weight; indices 1 and 2 are the 2 dimensions of input vectors x_i
         self.training_data = training_data
         self.max_iterations = max_iterations
+        self.x = np.arange(-max_x_1, max_x_1, 0.01)
+        self.line = ""
 
     """
     __sign__: returns +1 if number is greater than 0; otherwise, -1 
@@ -30,15 +32,42 @@ class perceptron:
     train: train perceptron using training data; return the weighting vector which perfectly classifies the training_data
     """
     def train(self):
-        cleanPass = True; t = 0
+        t = 0
         while t < self.max_iterations: 
-            cleanPass = True
             data_val = self.training_data[np.random.randint(0, len(self.training_data))]
             if self.__sign__(np.dot(np.transpose(self.w), data_val[0])) != data_val[1]:   # Misclassified Item
-                cleanPass = False
                 self.w = self.w + (data_val[1] * data_val[0])
             t += 1
         return self.w
+
+    def weight_line(self, x):
+        line_slope = 0.0 if self.w[2][0] == 0 else (self.w[2][0] / self.w[1][0])
+        y = np.arange(len(x))
+        for index, val in enumerate(x):
+            y[index] = line_slope * val
+        return y
+    
+    def animate(self, i):
+        data_val = self.training_data[np.random.randint(0, len(self.training_data))]
+        if self.__sign__(np.dot(np.transpose(self.w), data_val[0])) != data_val[1]:   # Misclassified Item
+            self.w = self.w + (data_val[1] * data_val[0])
+        self.line.set_ydata(self.weight_line(self.x))
+        # display i to screen as well
+        return self.line,
+
+    def init(self):
+        self.line.set_ydata(np.ma.array(self.x, mask=True))
+        return self.line,
+    
+    def training_animation(self):
+        fig, ax = plt.subplots()
+        plt.plot(self.training_data.get_x_1(), self.training_data.get_x_2())
+        plt
+        self.line, = ax.plot(self.x, np.zeros(len(self.x)))
+        anim = animation.FuncAnimation(fig, self.animate, np.arange(1, self.max_iterations), init_func=self.init,
+                                      interval=25, blit=True)
+        anim.save('perceptron_animation.mp4', fps=30)
+        
 
 """
 training_set: class wrapper for training data; produces a linearly separable data set
@@ -108,5 +137,6 @@ test driver: only executed when run as "python perceptron.py"; not as import
 if __name__ == "__main__":
     max_iterations = 100; num_elements = 20; num_features = 2; max_x_1 = 10; max_x_2 = 10
     training_dataset = training_set(num_elements, max_x_1, max_x_2)
-    model = perceptron(training_dataset, max_iterations, num_features)
-    weight_vector = model.train()
+    model = perceptron(training_dataset, max_iterations, num_features, max_x_1)
+    #weight_vector = model.train()
+    model.training_animation()
