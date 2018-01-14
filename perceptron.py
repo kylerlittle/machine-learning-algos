@@ -42,10 +42,11 @@ class perceptron:
         return self.w
 
     def weight_line(self, x):
-        line_slope = 0.0 if self.w[2][0] == 0 else (self.w[2][0] / self.w[1][0])
-        y = np.arange(len(x))
-        for index, val in enumerate(x):
-            y[index] = line_slope * val
+        y = np.linspace(-self.max_x[0], self.max_x[0], len(x))
+        if self.w[2][0] != 0:
+            line_slope = ((-1. * self.w[1][0]) - self.w[0][0]) / self.w[2][0]
+            for index, val in enumerate(y):
+                y[index] = line_slope * x[index]
         return y
     
     def animate(self, i):
@@ -160,8 +161,7 @@ class training_set:
 test driver: only executed when run as "python perceptron.py"; not as import
 """
 if __name__ == "__main__":
-    max_iterations = 100; num_elements = 20; num_features = 2; max_x = (1, 10, 10)
+    max_iterations = 1000; num_elements = 50; num_features = 2; max_x = (1, 10, 10)
     training_dataset = training_set(num_elements, max_x)
     model = perceptron(training_dataset, max_iterations, num_features, max_x)
-    #weight_vector = model.train()
     model.training_animation()
