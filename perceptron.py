@@ -19,6 +19,7 @@ class perceptron:
         self.w = np.zeros((num_features + 1, 1))    # index 0 is bias weight; indices 1 and 2 are the 2 dimensions of input vectors x_i
         self.training_data = training_data
         self.max_iterations = max_iterations
+        self.iteration_text = ""
         self.x = []
         self.line = []
         self.max_x = max_x
@@ -41,46 +42,76 @@ class perceptron:
             t += 1
         return self.w
 
-    def weight_line(self, x):
+    """
+    __weight_line__: return y values for the line
+    """
+    def __weight_line__(self, x):
         y = np.linspace(-self.max_x[0], self.max_x[0], len(x))
         if self.w[2][0] != 0:
             line_slope = ((-1. * self.w[1][0]) - self.w[0][0]) / self.w[2][0]
             for index, val in enumerate(y):
                 y[index] = line_slope * x[index]
         return y
-    
-    def animate(self, i):
+
+    """
+    __animate__: update the line by following the perceptron learning algorithm; update iteration_text too
+    """
+    def __animate__(self, i):
         data_val = self.training_data[np.random.randint(0, len(self.training_data))]
         if self.__sign__(np.dot(np.transpose(self.w), data_val[0])) != data_val[1]:   # Misclassified Item
             self.w = self.w + (data_val[1] * data_val[0])
-        self.line.set_ydata(self.weight_line(self.x))
-        # display i to screen as well
-        return self.line,
+        self.line.set_ydata(self.__weight_line__(self.x))
+        self.iteration_text.set_text('n = ' + str(len(self.training_data)) + '; t = ' + str(i))
+        return self.line, self.iteration_text
 
-    def init(self):
+    """
+    __init_anim__: since blit=True, this is required to initialize the animation
+    """
+    def __init_anim__(self):
         self.line.set_ydata(np.ma.array(self.x, mask=True))
-        return self.line,
+        self.iteration_text.set_text('')
+        return self.line, self.iteration_text
 
+    """
+    __assign_sym_col__: internal method to assign different colors to pass/fail (+1, -1) points
+    """
     def __assign_sym_col__(self):
         symbols = []; colors = []
         for val in self.training_data:
-            sym = 'o'
-            col = 'red' if val[1] == 1 else 'yellow'
+            sym = 'o'; col = 'red' if val[1] == 1 else 'yellow'
             symbols.append(sym); colors.append(col)
         return (symbols, colors)
-    
+
+    """
+    training_animation: run the perceptron and produce an animation to go along with it
+    """
     def training_animation(self):
         fig, ax = plt.subplots()
+
+        # Add training data points; label pass/fail (+1,-1) points differently
         (symbols, colors) = self.__assign_sym_col__()
         for _s, c, _x, _y in zip(symbols, colors, self.training_data.get_x_1(), self.training_data.get_x_2()):
             ax.scatter(_x, _y, s=100, marker=_s, c=c)
-        #ax.scatter(self.training_data.get_x_1(), self.training_data.get_x_2())  # plot initial data set
+
+        # Set plot's properties: xlim, ylim, title, iteration_text
         ax.set_xlim([-self.max_x[1], self.max_x[1]]); ax.set_ylim([-self.max_x[2], self.max_x[2]])
+        plt.title('Perceptron Learning Algorithm Animation', loc='left')
+        self.iteration_text = ax.text(0.81, 1.015, '', transform=ax.transAxes)
+
+        # Set up line to be animated
         self.x = np.arange(-max_x[1], max_x[1], 0.01)
         self.line, = ax.plot(self.x, np.zeros(len(self.x)))
-        anim = animation.FuncAnimation(fig, self.animate, np.arange(1, self.max_iterations), init_func=self.init,
-                                      interval=25, blit=True)
+        plt.setp(self.line, linewidth=2.0)
+
+        # Animate
+        anim = animation.FuncAnimation(fig, self.__animate__, np.arange(1, self.max_iterations), init_func=self.__init_anim__,
+                                      interval=15, blit=True)
+
+        # Save figure; requires an animation-writing scheme is setup such as ffmpeg or mencoder
+        # IF YOU DO NOT HAVE THESE INSTALLED, COMMENT OUT THE LINE BELOW
         anim.save('perceptron_animation.mp4', fps=30)
+        # AND UNCOMMENT THE LINE BELOW
+        # plt.show()
         
 
 """
@@ -109,12 +140,18 @@ class training_set:
             y = -1 if x_2 < 0. else 1    # assign -1 to values below x_0 axis & +1 to values above x_0 axis
             self.data_set.append((x,y))
 
+    """
+    get_x_1: returns an array of each input vector x's index 1 
+    """
     def get_x_1(self):
         x_1 = np.arange(len(self.data_set))
         for index in np.arange(len(self.data_set)):
             x_1[index] = self.data_set[index][0][1]
         return x_1
 
+    """
+    get_x_2: returns an array of each input vector x's index 2
+    """
     def get_x_2(self):
         x_2 = np.arange(len(self.data_set))
         for index in np.arange(len(self.data_set)):
@@ -161,7 +198,7 @@ class training_set:
 test driver: only executed when run as "python perceptron.py"; not as import
 """
 if __name__ == "__main__":
-    max_iterations = 1000; num_elements = 50; num_features = 2; max_x = (1, 10, 10)
+    max_iterations = 1000; num_elements = 250; num_features = 2; max_x = (1, 25, 25)
     training_dataset = training_set(num_elements, max_x)
     model = perceptron(training_dataset, max_iterations, num_features, max_x)
     model.training_animation()
