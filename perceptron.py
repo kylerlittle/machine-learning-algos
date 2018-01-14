@@ -15,12 +15,13 @@ class perceptron:
     """
     __init__: constructor
     """
-    def __init__(self, training_data, max_iterations, num_features, max_x_1):
-        self.w = np.zeros((num_features + 1, 1))# index 0 represents bias weight; indices 1 and 2 are the 2 dimensions of input vectors x_i
+    def __init__(self, training_data, max_iterations, num_features, max_x):
+        self.w = np.zeros((num_features + 1, 1))    # index 0 is bias weight; indices 1 and 2 are the 2 dimensions of input vectors x_i
         self.training_data = training_data
         self.max_iterations = max_iterations
-        self.x = np.arange(-max_x_1, max_x_1, 0.01)
-        self.line = ""
+        self.x = []
+        self.line = []
+        self.max_x = max_x
 
     """
     __sign__: returns +1 if number is greater than 0; otherwise, -1 
@@ -58,11 +59,23 @@ class perceptron:
     def init(self):
         self.line.set_ydata(np.ma.array(self.x, mask=True))
         return self.line,
+
+    def __assign_sym_col__(self):
+        symbols = []; colors = []
+        for val in self.training_data:
+            sym = 'o'
+            col = 'red' if val[1] == 1 else 'yellow'
+            symbols.append(sym); colors.append(col)
+        return (symbols, colors)
     
     def training_animation(self):
         fig, ax = plt.subplots()
-        plt.plot(self.training_data.get_x_1(), self.training_data.get_x_2())
-        plt
+        (symbols, colors) = self.__assign_sym_col__()
+        for _s, c, _x, _y in zip(symbols, colors, self.training_data.get_x_1(), self.training_data.get_x_2()):
+            ax.scatter(_x, _y, s=100, marker=_s, c=c)
+        #ax.scatter(self.training_data.get_x_1(), self.training_data.get_x_2())  # plot initial data set
+        ax.set_xlim([-self.max_x[1], self.max_x[1]]); ax.set_ylim([-self.max_x[2], self.max_x[2]])
+        self.x = np.arange(-max_x[1], max_x[1], 0.01)
         self.line, = ax.plot(self.x, np.zeros(len(self.x)))
         anim = animation.FuncAnimation(fig, self.animate, np.arange(1, self.max_iterations), init_func=self.init,
                                       interval=25, blit=True)
@@ -76,25 +89,37 @@ class training_set:
     """
     __init__: constructor
               num_elements is the size of the training set; num_features is the dimension of the input data
-              max_x_1 is the magnitude of maximum value for input vectors in element 1; likewise for max_x_2
-              recall x_0 is always 1.0
+              max_x[1] is the magnitude of maximum value for input vectors in element 1; likewise for max_x[2]
+              recall x[0] is always 1.0 for every input vector x
     """
-    def __init__(self, num_elements, max_x_1, max_x_2):
+    def __init__(self, num_elements, max_x):
         self.num_elements = num_elements
         self.data_set = []   # list of tuples of the form (x, y), where x is a 2-dimensional vector
         self.index = 0
-        self.__create_data_set__(max_x_1, max_x_2)
+        self.__create_data_set__(max_x)
 
     """
     __create_data_set__: create randomized data with certain limitations
     """
-    def __create_data_set__(self, max_x_1, max_x_2):
+    def __create_data_set__(self, max_x):
         for index in range(self.num_elements):
-            x_1 = np.random.uniform(-max_x_1, max_x_1); x_2 = np.random.uniform(-max_x_2, max_x_2)
+            x_1 = np.random.uniform(-max_x[1], max_x[1]); x_2 = np.random.uniform(-max_x[2], max_x[2])
             x = np.array([[1.0], [x_1], [x_2]])  # x[0] is fixed to be 1.0
-            y = -1 if x_1 < 0. else 1    # assign -1 to values below x_0 axis & +1 to values above x_0 axis
+            y = -1 if x_2 < 0. else 1    # assign -1 to values below x_0 axis & +1 to values above x_0 axis
             self.data_set.append((x,y))
 
+    def get_x_1(self):
+        x_1 = np.arange(len(self.data_set))
+        for index in np.arange(len(self.data_set)):
+            x_1[index] = self.data_set[index][0][1]
+        return x_1
+
+    def get_x_2(self):
+        x_2 = np.arange(len(self.data_set))
+        for index in np.arange(len(self.data_set)):
+            x_2[index] = self.data_set[index][0][2]
+        return x_2
+    
     """
     __iter__: overrides __iter__
     """
@@ -135,8 +160,8 @@ class training_set:
 test driver: only executed when run as "python perceptron.py"; not as import
 """
 if __name__ == "__main__":
-    max_iterations = 100; num_elements = 20; num_features = 2; max_x_1 = 10; max_x_2 = 10
-    training_dataset = training_set(num_elements, max_x_1, max_x_2)
-    model = perceptron(training_dataset, max_iterations, num_features, max_x_1)
+    max_iterations = 100; num_elements = 20; num_features = 2; max_x = (1, 10, 10)
+    training_dataset = training_set(num_elements, max_x)
+    model = perceptron(training_dataset, max_iterations, num_features, max_x)
     #weight_vector = model.train()
     model.training_animation()
